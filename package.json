@@ -1,7 +1,8 @@
 {
 	"author": "Kevin Peckham",
-	"name": "lj-sveltekit-ts-tailwind-pug-starter",
-	"version": "1.0.10",
+	"name": "advent-of-code-2023",
+	"description": "My journey through Advent of Code 2023",
+	"version": "0.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/lightning-jar/svelte-typescript-tailwind-pug-starter"
@@ -33,15 +34,6 @@
 		"vitest": "^0.34.6"
 	},
 	"type": "module",
-	"description": "A Svelte, Typescript, Tailwindcss, & Pug starter template",
-	"homepage": "https://skinnypug.dev",
-	"keywords": [
-		"Svelte",
-		"Typescript",
-		"TailwindCSS",
-		"Pug",
-		"Starter"
-	],
 	"license": "MIT",
 	"private": true,
 	"scripts": {
