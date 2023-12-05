@@ -3,11 +3,34 @@
 Day 4 - Scratchcards
 -->
 <script lang='ts'>
+	// context api
+	import { setContext } from 'svelte';
+
+	// writable store api
+	import { readable, writable } from 'svelte/store';
+
+	// components
+	import PuzzlePageComponent from '$components/molecules/PuzzlePageComponent.svelte';
+
 	// utils
 	import { splitStringIntoArrayOfLines, sumArrayOfNumbers, doubleValueXTimes, findOverlappingNumbersInArrays } from "$utils/utils";
 
 	// data
-	import { data, example } from "$data/day4";
+	import content from "$data/day4";
+
+	// settings from source
+	const { day, title } = content
+
+	// local stores
+	const dataSourceStore = writable('real');
+	const result1Store = writable("no results yet");
+	const result2Store = writable("no results yet");
+
+	// add local stores and data  to context
+	$: setContext('content', content);
+	$: setContext('dataSourceStore', dataSourceStore);
+	$: setContext('result1Store', result1Store);
+	$: setContext('result2Store', result2Store);
 
 	// types
   type Tracker = {[key:string]: {instances: number}};
@@ -15,7 +38,9 @@ Day 4 - Scratchcards
 	// classes
 	class Dataset {
 		[key: string]: unknown;
+		cardCount: number;
 		lines: string[];
+		points: number;
 		scratchCards: ScratchCard[];
 		tracker: Tracker;
 		constructor(data: string) {
@@ -26,7 +51,6 @@ Day 4 - Scratchcards
 			this.cardCount = Object.values(this.tracker).map((card) => card.instances).reduce((a, b) => a + b);
 		}
 	}
-
 	class ScratchCard {
 	  [key: string]: unknown;
 	  id: string;
@@ -88,35 +112,36 @@ Day 4 - Scratchcards
 	  }
 	}
 
+	// data set
+	const realDataset: Dataset = new Dataset(content.realData);
+	const exampleDataset: Dataset = new Dataset(content.exampleData);
+	$: dataset = $dataSourceStore === 'example' ? exampleDataset : realDataset;
 
-	const dataset = new Dataset(data);
+	// results
+	$: $result1Store = `${dataset.points} pts` 	// part 1: 18653 pts
+	$: $result2Store = `${dataset.cardCount} cards` 	// part 2: 5921508
 
-	// part 1: 18653 pts
-	// part 2: 5921508
-
-	// refs
-	let winningNumbersGrid: HTMLDivElement;
-	let winningNumbersGridLength: number = 400;
-	$: {
-		if (winningNumbersGrid) {
-			winningNumbersGridLength = winningNumbersGrid.offsetWidth;
-		}
-	}
-
-	// refs
-	let playerNumbersGrid: HTMLDivElement;
-	let playerNumbersGridLength: number = 400;
-	$: {
-		if (playerNumbersGrid) {
-			playerNumbersGridLength = playerNumbersGrid.offsetWidth;
-		}
-	}
+	// visualization layout calculations
+	$: firstScratchCard = dataset.scratchCards[0];
+	$: lastScratchCard = dataset.scratchCards[dataset.scratchCards.length - 1];
+	$: winningNumbersCount = firstScratchCard.winningNumbersArray.length;
+	$: winningNumbersGridTemplateColumns = `repeat(${winningNumbersCount}, 2.5ch)`
+	$: playerNumbersCount = firstScratchCard.playerNumbersArray.length
+	$: playerNumbersGridTemplateColumns = `repeat(${playerNumbersCount}, 2.5ch)`
+	$: highestPoints = Math.max(...dataset.scratchCards.map((card) => card.pointsValue));
+	$: maxPointLength = highestPoints.toString().length;
+	$: mostCardsWon = Math.max(...dataset.scratchCards.map((card) => card.cardsWon.length));
+	$: biggestCardId = Math.max(...dataset.scratchCards.map((card) => Number(card.id)));
+	$: maxCardIdLength = biggestCardId.toString().length;
+	$: winningNumbersGridLength = winningNumbersCount * 2.5 + (winningNumbersCount - 1) * 0.75;
+	$: playerNumbersGridLength = playerNumbersCount * 2.5 + (playerNumbersCount - 1) * 0.75;
+	$: cardsWonGridLength = mostCardsWon * 2.5 + (mostCardsWon - 1) * 0.75;
+	$: maxInstancesValue = Math.max(...Object.values(dataset.tracker).map((card) => card.instances));
+	$: maxInstancesCharacterCount = maxInstancesValue.toString().length;
 
 	// id widths
-	const lastScratchCard = dataset.scratchCards[dataset.scratchCards.length - 1];
-	const lastScratchCardId = lastScratchCard.id;
-	const lastScratchCardIdLength = lastScratchCardId.length;
-
+	$: lastScratchCardId = lastScratchCard.id;
+	$: lastScratchCardIdLength = lastScratchCardId.length;
 
 	// variables
 	let scratchCard: ScratchCard;
@@ -126,83 +151,98 @@ Day 4 - Scratchcards
 	</script>
 
 	<template lang="pug">
-	header.p-4
-		h1.font-semibold.text-18 Day 4 - Scratchcards
+	PuzzlePageComponent
 
-	main.font-mono.text-16.grid.p-4.align-middle(
-			class="gap-[1ch]")
+		//- 1. visualizations
+		div(slot="visualization")
 
-		//- total points
-		.flex.gap-8
-			div(class="mr-[2ch] mb-4") Part 1:  {dataset.points} pts
-			div(class="mr-[2ch] mb-4") Part 2:  {dataset.cardCount} cards
+			//- headings row
+			.flex.gap-8.mb-3
 
+				.border-b(
+					style!="min-width:4ch; width:{maxCardIdLength + 1}ch;"
+					) id
 
-		//- headings row
-		.flex
+				.border-b(
+					style!="width:{winningNumbersGridLength}ch;"
+					) winning numbers
 
-			div(
-				class="mr-[4ch] border-b"
-				style!="width:{lastScratchCardIdLength}ch;"
-				) id
+				.border-b(
+					class="border-b"
+					style!="width:{playerNumbersGridLength}ch;"
+					) player numbers
 
-			div(
-				class="mr-[4ch] gap-[0.75ch] border-b"
-				style!="width:{winningNumbersGridLength}px;"
-				)  winning numbers
+				.border-b(
+					style!="min-width:{'pts'.length}ch; width:{maxPointLength + 1}ch;"
+					) pts
 
-			div(
-				class="mr-[4ch] gap-[0.75ch] w-[9ch] border-b"
-				style!="width:{playerNumbersGridLength}px;"
-				)  player numbers
+				.border-b(
+					style!="min-width:{'cards won'.length}ch; width:{mostCardsWon * maxCardIdLength + mostCardsWon}ch;"
+					) cards won
 
-			div(class="mr-[4ch] gap-[0.75ch] w-[3ch] border-b")  pts
+				.border-b(style!="min-width:{'instances'.length}ch; width:{maxInstancesCharacterCount}ch;") instances
 
-			div(class="mr-[2ch] w-[40ch] border-b")  cards won
-			div(class="mr-[2ch] w-[10ch] border-b")  instances
+			//- base data layer -- iterate rows
+			+each('dataset.scratchCards as scratchCard, index')
+				.flex.gap-8(class="mb-[.5ch]")
 
-		//- base data layer -- iterate rows
-		+each('dataset.scratchCards as scratchCard, index')
-			.flex
+					//- id
+					.cell(
+						class!="text-right"
+						style!="min-width: 4ch; width:{maxCardIdLength + 1}ch;") { "0".repeat(3 - Number(scratchCard.id.length)) }{ scratchCard.id }
 
-				//- id
-				div(
-					class!="mr-[4ch] text-right"
-					style!="width:{lastScratchCardIdLength}ch;") { "0".repeat(3 - Number(scratchCard.id.length)) }{scratchCard.id}
+					//- winning numbers
+					.grid(
+							class="gap-x-[0.75ch]"
+							style!="grid-template-columns:{winningNumbersGridTemplateColumns};")
+						+each('scratchCard.winningNumbersArray as winningNumber, index')
+							.grid-cell(class!="{scratchCard.winsArray.includes(winningNumber) ? 'highlight-cell' : '' }") {winningNumber}
 
-				//- winning numbers
-				div.grid(
-						bind:this!="{winningNumbersGrid}"
-						class="mr-[4ch] gap-[0.75ch]"
-						style!="grid-template-columns:repeat({scratchCard.winningNumbersArray.length * 2}, 1ch);")
-					+each('scratchCard.winningNumbersArray as winningNumber, index')
-						.cell(class!="{scratchCard.winsArray.includes(winningNumber) ? 'bg-accent text-primary' : '' }") {winningNumber}
+					//- player numbers
+					.grid(
+						class="gap-x-[0.75ch]"
+						style!="grid-template-columns:{playerNumbersGridTemplateColumns};")
+						+each('scratchCard.playerNumbersArray as playerNumber, index')
+							.grid-cell(class!="{scratchCard.winsArray.includes(playerNumber) ? 'highlight-cell' : '' }")  {playerNumber}
 
-				//- player numbers
-				div.grid(
-					bind:this!="{playerNumbersGrid}"
-					class="mr-[4ch] gap-[0.75ch]"
-					style!="grid-template-columns:repeat({scratchCard.playerNumbersArray.length * 2}, 1ch);")
-					+each('scratchCard.playerNumbersArray as playerNumber, index')
-						.cell(class!="{scratchCard.winsArray.includes(playerNumber) ? 'bg-accent text-primary' : '' }")  {playerNumber}
+					//- points
+					.cell(
+						style!="min-width:{'pts'.length}ch; width:{maxPointLength + 1}ch;"
+						) {scratchCard.pointsValue}
 
-				//- points
-				div(class="mr-[4ch] gap-[0.75ch] w-[3ch]") {scratchCard.pointsValue}
+					//- cards won
+					.cell(
+						style!="min-width:{'cards won'.length}ch; width:{mostCardsWon * maxCardIdLength + mostCardsWon}ch;"
+						) {@html scratchCard.cardsWon.join(' ') ? scratchCard.cardsWon.join(' ') : '&nbsp;'}
 
-				//- cards won
-				div(class="mr-[2ch] w-[40ch] bg-white/[5%] px-[0.5ch]") {scratchCard.cardsWon.join(' ')}
+					//- instances
+					.cell(
+						style!="min-width:{'instances'.length}ch; width:{maxInstancesCharacterCount + 1}ch;"
+						) {dataset.tracker[scratchCard.id].instances.toLocaleString()}
 
-				//- instances
-				div(class="mr-[2ch] w-[10ch] px-[0.5ch] text-right bg-white/[5%]") {dataset.tracker[scratchCard.id].instances.toLocaleString()}
+		//- 2. solution
+		div(slot="solution")
+			div Solution
+
 	</template>
 
 	<style lang="postcss">
 		.cell {
 			@apply
-				w-full
+				bg-white/5
 				h-full
-				col-span-2
+				px-[0.5ch]
 				text-right;
-			padding: .25ch;
+		}
+		.grid-cell {
+			@apply
+				bg-white/5
+				px-[0.25ch]
+				text-right;
+		}
+		.highlight-cell {
+			@apply
+				bg-accent/90
+				text-primary/90;
 		}
 	</style>
