@@ -3,14 +3,13 @@
 	// components
 	import ButtonLink from "$atoms/ButtonLink.svelte";
 	import Footer from "$components/organisms/Footer.svelte";
-	import LogosGrid from "$molecules/LogosGrid.svelte";
 	import PreFooter from "$atoms/PreFooter.svelte";
 
 	// types
 	import type { LayoutData } from "./$types";
 
 	// catch data from layout function in +layout.ts
-	export let data: LayoutData;
+	// export let data: LayoutData;
 </script>
 
 <template lang="pug">

@@ -20,3 +20,15 @@ export function doubleValueXTimes(value: number, times: number) {
 export function findOverlappingNumbersInArrays(array1: string[], array2: string[]) {
   return array1.filter((number) => array2.includes(number));
 }
+
+// export function findInSet(pred: (item)=> boolean, set: Set<unknown>) {
+//   for (let item of set) if(pred(item)) return item;
+// }
+
+
+export const utils = {
+  splitStringIntoArrayOfLines,
+  sumArrayOfNumbers,
+  doubleValueXTimes,
+  findOverlappingNumbersInArrays,
+}

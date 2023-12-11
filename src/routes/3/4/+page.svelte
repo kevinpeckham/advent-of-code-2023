@@ -22,7 +22,7 @@ Day 4 - Scratchcards
 
 	// data sources object
 	const dataSources: {[key: string]: string} = {
-		real: realData,
+		real: source.realData,
 		example: exampleData,
 	};
 
